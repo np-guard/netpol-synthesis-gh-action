@@ -2,6 +2,12 @@ name: 'K8s NetworkPolicy Synthesis'
 description: 'An action to automatically synthesize K8s NetworkPolicies, permitting only the connections your application requires and nothing more'
 author: 'shift-left-netconfig project'
 
+inputs:
+  netpolYamlPath:
+    description: 'A relative path in the source repository into which the resulting NetworkPolicies yaml will be written'
+    required: false
+    default: 'release/netpols.yaml'
+
 runs:
   using: 'composite'
   steps:
@@ -25,3 +31,11 @@ runs:
       with:
         name: netpols.yaml
         path: ${{ github.workspace }}/artifacts/netpols.yaml
+    - name: commit into branch
+      shell: sh
+      run: |
+        cp ${{ github.workspace }}/artifacts/netpols.yaml ${{ github.workspace }}/repo/${{ inputs.netpolYamlPath }}
+        git add ${{ github.workspace }}/repo/${{ inputs.netpolYamlPath }}
+        git commit -m"adding network policies to enforce minimal connectivity"
+     - name: open PR
+       uses: peter-evans/create-pull-request@v3
