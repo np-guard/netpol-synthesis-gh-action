@@ -37,5 +37,5 @@ runs:
         cp ${{ github.workspace }}/artifacts/netpols.yaml ${{ github.workspace }}/repo/${{ inputs.netpolYamlPath }}
         git add ${{ github.workspace }}/repo/${{ inputs.netpolYamlPath }}
         git commit -m"adding network policies to enforce minimal connectivity"
-     - name: open PR
-       uses: peter-evans/create-pull-request@v3
+    - name: open PR
+      uses: peter-evans/create-pull-request@v3
