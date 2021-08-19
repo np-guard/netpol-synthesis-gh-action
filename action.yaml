@@ -34,7 +34,9 @@ runs:
     - name: commit into branch
       shell: sh
       run: |
-        cp ${{ github.workspace }}/artifacts/netpols.yaml ${{ github.workspace }}/repo/${{ inputs.netpolYamlPath }}
+        cd ${{ github.workspace }}/repo
+        mkdir -p $( dirname ${{ inputs.netpolYamlPath }} )
+        cp ${{ github.workspace }}/artifacts/netpols.yaml ${{ inputs.netpolYamlPath }}
         git add ${{ github.workspace }}/repo/${{ inputs.netpolYamlPath }}
         git commit -m"adding network policies to enforce minimal connectivity"
     - name: open PR
