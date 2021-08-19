@@ -8,7 +8,8 @@ runs:
     - uses: actions/checkout@v2
       with:
         path: repo
-    - run: |
+    - shell: sh
+      run: |
         mkdir -p ${{ github.workspace }}/artifacts
         chmod a+rw ${{ github.workspace }}/artifacts
     - name: Analyze
