@@ -43,3 +43,5 @@ runs:
         git commit -m"adding network policies to enforce minimal connectivity"
     - name: open PR
       uses: peter-evans/create-pull-request@v3
+      with:
+        path: repo
