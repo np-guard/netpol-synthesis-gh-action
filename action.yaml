@@ -1,4 +1,4 @@
-name: 'K8s NetworkPolicy Synthesis'
+name: 'K8s NetworkPolicy Auto-Synthesis'
 description: 'An action to automatically synthesize K8s NetworkPolicies, permitting only the connections your application requires and nothing more'
 author: 'shift-left-netconfig project'
 
@@ -26,12 +26,17 @@ runs:
       uses: docker://ghcr.io/shift-left-netconfig/netpol-synth@sha256:2f8e41357a17ab07e61555b43314b26de713eb0dd46abbc16349168402425d16
       with:
         args: /github/workspace/artifacts/app-net-top.json -o /github/workspace/artifacts/netpols.yaml
-    - name:  'Upload Artifact'
+    - name:  Upload Netpols Yaml
       uses: actions/upload-artifact@v2
       with:
         name: netpols.yaml
         path: ${{ github.workspace }}/artifacts/netpols.yaml
-    - name: commit into branch
+    - name:  Upload App network topology
+      uses: actions/upload-artifact@v2
+      with:
+        name: app-net-top.json
+        path: ${{ github.workspace }}/artifacts/app-net-top.json
+    - name: Commit changes
       shell: sh
       run: |
         cd ${{ github.workspace }}/repo
@@ -41,7 +46,10 @@ runs:
         git config user.email '${{ github.actor }}@users.noreply.github.com'
         git add ${{ github.workspace }}/repo/${{ inputs.netpolYamlPath }}
         git commit -m"adding network policies to enforce minimal connectivity"
-    - name: open PR
+    - name: Open PR
       uses: peter-evans/create-pull-request@v3
       with:
         path: repo
+        title: Automatic updates to NetworkPolicies
+        branch: update-netpols
+        branch-suffix: timestamp
