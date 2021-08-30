@@ -23,7 +23,7 @@ runs:
       with:
         args: -dirpath  /github/workspace/repo -commitid ${{ github.sha }} -giturl ${{ env.GITHUB_SERVER_URL }}/${{ github.repository }} -gitbranch ${{ github.ref }} -outputfile /github/workspace/artifacts/app-net-top.json
     - name: Synthesize
-      uses: docker://ghcr.io/shift-left-netconfig/netpol-synth@sha256:2f8e41357a17ab07e61555b43314b26de713eb0dd46abbc16349168402425d16
+      uses: docker://ghcr.io/shift-left-netconfig/netpol-synth@sha256:0fef873e13d2250cdcb795d30e842a5cb7b5f60d0ae0fec57f5639f8df5a7f4c
       with:
         args: /github/workspace/artifacts/app-net-top.json -o /github/workspace/artifacts/netpols.yaml
     - name:  Upload Netpols Yaml
