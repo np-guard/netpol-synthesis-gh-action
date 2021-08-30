@@ -7,6 +7,9 @@ inputs:
     description: 'A relative path in the source repository into which the resulting NetworkPolicies yaml will be written'
     required: false
     default: 'release/netpols.yaml'
+  corporate-policies:
+    description: A list of space-separated corporate policy files to use
+    required: false
 
 runs:
   using: 'composite'
@@ -19,10 +22,19 @@ runs:
       uses: docker://ghcr.io/shift-left-netconfig/net-top-analyzer@sha256:bd40a99fdbd293040a66166abd978bb806e17bf991998ba83fe06bac77e63a06
       with:
         args: -dirpath  /github/workspace -commitid ${{ github.sha }} -giturl ${{ env.GITHUB_SERVER_URL }}/${{ github.repository }} -gitbranch ${{ github.ref }} -outputfile /github/workspace/artifacts/app-net-top.json
+    - name: Set -b flag
+      run: |
+        for policy in ${{ inputs.corporate-policies }}
+        do
+          export POLICIES_WITH_B="-b $policy $POLICIES_WITH_B"
+        done
+        echo "::set-output name=policies-with-b::$(echo $POLICIES_WITH_B)"
+      shell: bash
+      id: add-b-flag
     - name: Synthesize
       uses: docker://ghcr.io/shift-left-netconfig/netpol-synth@sha256:0fef873e13d2250cdcb795d30e842a5cb7b5f60d0ae0fec57f5639f8df5a7f4c
       with:
-        args: /github/workspace/artifacts/app-net-top.json -o /github/workspace/artifacts/netpols.yaml
+        args: /github/workspace/artifacts/app-net-top.json -o /github/workspace/artifacts/netpols.yaml ${{ steps.add-b-flag.outputs.policies-with-b }}
     - name:  Upload Netpols Yaml
       uses: actions/upload-artifact@v2
       with:
