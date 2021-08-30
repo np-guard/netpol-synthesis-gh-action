@@ -32,7 +32,7 @@ runs:
       shell: bash
       id: add-b-flag
     - name: Synthesize
-      uses: docker://ghcr.io/shift-left-netconfig/netpol-synth@sha256:0fef873e13d2250cdcb795d30e842a5cb7b5f60d0ae0fec57f5639f8df5a7f4c
+      uses: docker://ghcr.io/shift-left-netconfig/netpol-synth@sha256:148e371fb40fd24ea924c1c32c969481f27808171dd901dd60141bd9f2f87b76
       with:
         args: /github/workspace/artifacts/app-net-top.json -o /github/workspace/artifacts/netpols.yaml ${{ steps.add-b-flag.outputs.policies-with-b }}
     - name:  Upload Netpols Yaml
