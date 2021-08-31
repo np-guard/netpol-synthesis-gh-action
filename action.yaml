@@ -3,13 +3,17 @@ description: 'An action to automatically synthesize K8s NetworkPolicies, permitt
 author: 'shift-left-netconfig project'
 
 inputs:
-  netpolYamlPath:
-    description: 'A relative path in the source repository into which the resulting NetworkPolicies yaml will be written'
-    required: false
-    default: 'release/netpols.yaml'
   corporate-policies:
     description: A list of space-separated corporate policy files to use
     required: false
+
+outputs:
+  netpols:
+    description: Full path to the synthesized NetworkPolicies yaml (under the workflow's GitHub workspace)
+    value: ${{ steps.set-outputs.outputs.netpols }}
+  topology:
+    description: Full path to the topology-analysis output (under the workflow's GitHub workspace)
+    value: ${{ steps.set-outputs.outputs.topology }}
 
 runs:
   using: 'composite'
@@ -23,41 +27,21 @@ runs:
       with:
         args: -dirpath  /github/workspace -commitid ${{ github.sha }} -giturl ${{ env.GITHUB_SERVER_URL }}/${{ github.repository }} -gitbranch ${{ github.ref }} -outputfile /github/workspace/artifacts/app-net-top.json
     - name: Set -b flag
+      id: add-b-flag
+      shell: bash
       run: |
         for policy in ${{ inputs.corporate-policies }}
         do
           export POLICIES_WITH_B="-b $policy $POLICIES_WITH_B"
         done
         echo "::set-output name=policies-with-b::$(echo $POLICIES_WITH_B)"
-      shell: bash
-      id: add-b-flag
     - name: Synthesize
       uses: docker://ghcr.io/shift-left-netconfig/netpol-synth@sha256:148e371fb40fd24ea924c1c32c969481f27808171dd901dd60141bd9f2f87b76
       with:
         args: /github/workspace/artifacts/app-net-top.json -o /github/workspace/artifacts/netpols.yaml ${{ steps.add-b-flag.outputs.policies-with-b }}
-    - name:  Upload Netpols Yaml
-      uses: actions/upload-artifact@v2
-      with:
-        name: netpols.yaml
-        path: ${{ github.workspace }}/artifacts/netpols.yaml
-    - name:  Upload App network topology
-      uses: actions/upload-artifact@v2
-      with:
-        name: app-net-top.json
-        path: ${{ github.workspace }}/artifacts/app-net-top.json
-    - name: Commit changes
-      shell: sh
+    - name: Set outputs
+      id: set-outputs
+      shell: bash
       run: |
-        cd ${{ github.workspace }}
-        mkdir -p $( dirname ${{ inputs.netpolYamlPath }} )
-        cp ${{ github.workspace }}/artifacts/netpols.yaml ${{ inputs.netpolYamlPath }}
-        git config user.name ${{ github.actor }}
-        git config user.email '${{ github.actor }}@users.noreply.github.com'
-        git add ${{ github.workspace }}/${{ inputs.netpolYamlPath }}
-        git commit -m"adding network policies to enforce minimal connectivity"
-    - name: Open PR
-      uses: peter-evans/create-pull-request@v3
-      with:
-        title: Automatic updates to NetworkPolicies
-        branch: update-netpols
-        branch-suffix: timestamp
+        echo "::set-output name=netpols::$(echo ${{ github.workspace }}/artifacts/netpols.yaml)"
+        echo "::set-output name=topology::$(echo ${{ github.workspace }}/artifacts/app-net-top.json)"
