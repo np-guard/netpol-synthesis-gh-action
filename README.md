@@ -3,6 +3,8 @@
 ## About
 This action automates the generation of Kubernetes NetworkPolicies for a given application. It will first scan your repository for YAML files which define various Kubernetes resources (e.g., Deployments, Services, ConfigMaps). It will then analyze these files and extract all network connections required for your application to work. Finally, this action will synthesise K8s NetworkPolicies that allow these connections and nothing more.
 
+This action is part of a wider attempt to provide [shift-left automation for generating and maintaining Kubernetes Network Policies](https://shift-left-netconfig.github.io/).
+
 ## Inputs
 ### `corporate-policies`
 (Optional) A list of space-separated corporate policy files to consider during synthesis. Generated NetworkPolicies will never violate any of these policies. Files can be given as a relative path to files in the current repository or as URLs to files stored on GitHub. File format is described [here](https://github.com/shift-left-netconfig/baseline-rules).
