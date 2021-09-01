@@ -1,6 +1,9 @@
 name: 'K8s NetworkPolicy Auto-Synthesis'
-description: 'An action to automatically synthesize K8s NetworkPolicies, permitting only the connections your application requires and nothing more'
+description: 'Automatically synthesize K8s NetworkPolicies, permitting only the connections your application requires and nothing more'
 author: 'shift-left-netconfig project'
+branding:
+  icon: 'shield'  
+  color: 'green'
 
 inputs:
   corporate-policies:
