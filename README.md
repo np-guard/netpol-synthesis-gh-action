@@ -15,7 +15,7 @@ Full path to the topology-analysis output (under the workflow's GitHub workspace
 
 ## Example usage
 ### Storing discovered connectivity and synthesized NetworkPolicies as workflow artifacts
-```
+```yaml
 name: synth-network-policies
 on:
   push:
@@ -42,7 +42,7 @@ jobs:
 ```
 
 ### Open a pull request for synthesized NetworkPolicies (with corporate policies)
-```
+```yaml
 name: synth-network-policies
 on:
   workflow_dispatch:
