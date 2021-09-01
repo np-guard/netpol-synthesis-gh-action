@@ -14,7 +14,7 @@ Full path to the synthesized NetworkPolicies yaml (under the workflow's GitHub w
 Full path to the topology-analysis output (under the workflow's GitHub workspace)
 
 ## Example usage
-### Storing discovered connectivity and synthesized NetworkPolicies as workflow artifacts
+### Store discovered connectivity and synthesized NetworkPolicies as workflow artifacts
 ```yaml
 name: synth-network-policies
 on:
@@ -29,19 +29,49 @@ jobs:
       - name: Synthesize netpols
         id: synth-netpol
         uses: shift-left-netconfig/netpol-synthesis-gh-action@v1
-      - name:  Upload netpols yaml
+      - name:  Upload netpols yaml as workflow artifact
         uses: actions/upload-artifact@v2
         with:
           name: netpols.yaml
           path: ${{ steps.synth-netpol.outputs.netpols }}
-      - name:  Upload app network topology
+      - name:  Upload app network topology as workflow artifact
         uses: actions/upload-artifact@v2
         with:
           name: app-net-top.json
           path: ${{ steps.synth-netpol.outputs.topology }}
 ```
 
-### Open a pull request for synthesized NetworkPolicies (with corporate policies)
+### Automatically open a pull request for synthesized NetworkPolicies
+```yaml
+name: synth-network-policies
+on:
+  workflow_dispatch:
+
+jobs:
+  synthesize-netpols:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Synthesize netpols
+        id: synth-netpol
+        uses: shift-left-netconfig/netpol-synthesis-gh-action@v1
+      - name: Commit changes
+        shell: sh
+        run: |
+          cd ${{ github.workspace }}
+          cp ${{ steps.synth-netpol.outputs.netpols }} release/netpols.yaml
+          git config user.name ${{ github.actor }}
+          git config user.email '${{ github.actor }}@users.noreply.github.com'
+          git add release/netpols.yaml
+          git commit -m"adding network policies to enforce minimal connectivity"
+      - name: Open PR
+        uses: peter-evans/create-pull-request@v3
+        with:
+          title: Automatic updates to NetworkPolicies
+          branch: update-netpols
+          branch-suffix: timestamp
+  ```
+### Synthesize with corporate policies
 ```yaml
 name: synth-network-policies
 on:
@@ -59,19 +89,9 @@ jobs:
           corporate-policies: >
             https://github.com/shift-left-netconfig/baseline-rules/blob/master/examples/ciso_denied_ports.yaml
             https://github.com/shift-left-netconfig/baseline-rules/blob/master/examples/restrict_access_to_payment.yaml
-      - name: Commit changes
-        shell: sh
-        run: |
-          cd ${{ github.workspace }}
-          cp ${{ steps.synth-netpol.outputs.netpols }} release/netpols.yaml
-          git config user.name ${{ github.actor }}
-          git config user.email '${{ github.actor }}@users.noreply.github.com'
-          git add release/netpols.yaml
-          git commit -m"adding network policies to enforce minimal connectivity"
-      - name: Open PR
-        uses: peter-evans/create-pull-request@v3
+      - name:  Upload netpols yaml as workflow artifact
+        uses: actions/upload-artifact@v2
         with:
-          title: Automatic updates to NetworkPolicies
-          branch: update-netpols
-          branch-suffix: timestamp
-  ```
+          name: netpols.yaml
+          path: ${{ steps.synth-netpol.outputs.netpols }}
+```
