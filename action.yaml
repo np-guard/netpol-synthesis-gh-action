@@ -23,7 +23,7 @@ runs:
   steps:
     - shell: sh
       run: |
-        mkdir -p ${{ github.workspace }}/artifacts
+        mkdir -p ${{ github.workspace }}/artifacts  # github.workspace seems to be the only directory that can be easily shared with a docker container
         chmod a+rw ${{ github.workspace }}/artifacts
     - name: Analyze
       uses: docker://ghcr.io/shift-left-netconfig/net-top-analyzer@sha256:bd40a99fdbd293040a66166abd978bb806e17bf991998ba83fe06bac77e63a06
@@ -46,5 +46,6 @@ runs:
       id: set-outputs
       shell: bash
       run: |
-        echo "::set-output name=netpols::$(echo ${{ github.workspace }}/artifacts/netpols.yaml)"
-        echo "::set-output name=topology::$(echo ${{ github.workspace }}/artifacts/app-net-top.json)"
+        mv ${{ github.workspace }}/artifacts $HOME/artifacts  # so we don't pollute the workspace directory
+        echo "::set-output name=netpols::$(echo $HOME/artifacts/netpols.yaml)"
+        echo "::set-output name=topology::$(echo $HOME/artifacts/app-net-top.json)"
