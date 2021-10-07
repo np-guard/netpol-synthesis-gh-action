@@ -10,13 +10,15 @@ This action is part of a wider attempt to provide [shift-left automation for gen
 (Optional) A list of space-separated corporate policy files to consider during synthesis. Generated NetworkPolicies will never violate any of these policies. Files can be given as a relative path to files in the current repository or as URLs to files stored on GitHub. File format is described [here](https://github.com/shift-left-netconfig/baseline-rules).
 
 ## Outputs
-### `netpols`
-Full path to the synthesized NetworkPolicies yaml (under the workflow's GitHub workspace)
-### `topology`
-Full path to the topology-analysis output (under the workflow's GitHub workspace)
+### `synth-artifact`
+The name of the GitHub Action Artifact containing synthesis results
+### `synth-netpols-file-name`
+The name of the file in the artifact, which contains the synthesized NetworkPolicies yaml
+### `connection-list-file-name`
+The name of the actual file in the artifact, which contains the topology-analysis output
 
 ## Example usage
-### Store discovered connectivity and synthesized NetworkPolicies as workflow artifacts
+### Basic usage - discovered connectivity and synthesized NetworkPolicies are stored in a workflow artifact
 ```yaml
 name: synth-network-policies
 on:
@@ -28,24 +30,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Synthesize netpols
-        id: synth-netpol
-        uses: shift-left-netconfig/netpol-synthesis-gh-action@v1
-      - name:  Upload netpols yaml as workflow artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: netpols.yaml
-          path: ${{ steps.synth-netpol.outputs.netpols }}
-      - name:  Upload app network topology as workflow artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: app-net-top.json
-          path: ${{ steps.synth-netpol.outputs.topology }}
+      - uses: shift-left-netconfig/netpol-synthesis-gh-action@v2
 ```
 
 ### Automatically open a pull request for synthesized NetworkPolicies
 ```yaml
-name: synth-network-policies
+name: synth-network-policies-and-open-PR
 on:
   workflow_dispatch:
 
@@ -56,16 +46,19 @@ jobs:
       - uses: actions/checkout@v2
       - name: Synthesize netpols
         id: synth-netpol
-        uses: shift-left-netconfig/netpol-synthesis-gh-action@v1
+        uses: shift-left-netconfig/netpol-synthesis-gh-action@v2
+      - uses: actions/download-artifact@v2
+        with:
+          name: ${{ steps.synth-netpol.outputs.synth-artifact }}
+          path: release
       - name: Commit changes
         shell: sh
         run: |
-          cd ${{ github.workspace }}
-          cp ${{ steps.synth-netpol.outputs.netpols }} release/netpols.yaml
           git config user.name ${{ github.actor }}
           git config user.email '${{ github.actor }}@users.noreply.github.com'
-          git add release/netpols.yaml
+          git add release/${{ steps.synth-netpol.outputs.synth-netpols-file-name }}
           git commit -m"adding network policies to enforce minimal connectivity"
+          rm release/${{ steps.synth-netpol.outputs.connection-list-file-name }}  # avoid committing connection list
       - name: Open PR
         uses: peter-evans/create-pull-request@v3
         with:
@@ -84,16 +77,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Synthesize netpols
-        id: synth-netpol
-        uses: shift-left-netconfig/netpol-synthesis-gh-action@v1
+      - uses: shift-left-netconfig/netpol-synthesis-gh-action@v2
         with:
           corporate-policies: >
             https://github.com/shift-left-netconfig/baseline-rules/blob/master/examples/ciso_denied_ports.yaml
             https://github.com/shift-left-netconfig/baseline-rules/blob/master/examples/restrict_access_to_payment.yaml
-      - name:  Upload netpols yaml as workflow artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: netpols.yaml
-          path: ${{ steps.synth-netpol.outputs.netpols }}
 ```
