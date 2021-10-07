@@ -11,41 +11,48 @@ inputs:
     required: false
 
 outputs:
-  netpols:
-    description: Full path to the synthesized NetworkPolicies yaml (under the workflow's GitHub workspace)
-    value: ${{ steps.set-outputs.outputs.netpols }}
-  topology:
-    description: Full path to the topology-analysis output (under the workflow's GitHub workspace)
-    value: ${{ steps.set-outputs.outputs.topology }}
+  synth-artifact:
+    description: The name of the GitHub Action Artifact containing synthesis results
+    value: ${{ steps.set-outputs.outputs.synth-artifact }}
+  synth-netpols-file-name:
+    description: The name of the file in the artifact, which contains the synthesized NetworkPolicies yaml
+    value: ${{ steps.set-outputs.outputs.synth-netpols-file-name }}
+  connection-list-file-name:
+    description: The name of the actual file in the artifact, which contains the topology-analysis output
+    value: ${{ steps.set-outputs.outputs.connection-list-file-name }}
 
 runs:
   using: 'composite'
   steps:
-    - shell: sh
-      run: |
-        mkdir -p ${{ github.workspace }}/artifacts  # github.workspace seems to be the only directory that can be easily shared with a docker container
-        chmod a+rw ${{ github.workspace }}/artifacts
-    - name: Analyze
-      uses: docker://ghcr.io/shift-left-netconfig/net-top-analyzer@sha256:bd40a99fdbd293040a66166abd978bb806e17bf991998ba83fe06bac77e63a06
-      with:
-        args: -dirpath  /github/workspace -commitid ${{ github.sha }} -giturl ${{ env.GITHUB_SERVER_URL }}/${{ github.repository }} -gitbranch ${{ github.ref }} -outputfile /github/workspace/artifacts/app-net-top.json
-    - name: Set -b flag
+    - name: Prepare directory and command-line arguments
       id: add-b-flag
       shell: bash
       run: |
+        mkdir -p ${{ github.workspace }}/netpol-synth-gh-action-output  # github.workspace seems to be the only directory that can be easily shared with a docker container
+        chmod a+rw ${{ github.workspace }}/netpol-synth-gh-action-output
         for policy in ${{ inputs.corporate-policies }}
         do
           export POLICIES_WITH_B="-b $policy $POLICIES_WITH_B"
         done
         echo "::set-output name=policies-with-b::$(echo $POLICIES_WITH_B)"
+    - name: Analyze
+      uses: docker://ghcr.io/shift-left-netconfig/net-top-analyzer@sha256:bd40a99fdbd293040a66166abd978bb806e17bf991998ba83fe06bac77e63a06
+      with:
+        args: -dirpath  /github/workspace -commitid ${{ github.sha }} -giturl ${{ env.GITHUB_SERVER_URL }}/${{ github.repository }} -gitbranch ${{ github.ref }} -outputfile /github/workspace/netpol-synth-gh-action-output/app-net-top.json
     - name: Synthesize
       uses: docker://ghcr.io/shift-left-netconfig/netpol-synth@sha256:148e371fb40fd24ea924c1c32c969481f27808171dd901dd60141bd9f2f87b76
       with:
-        args: /github/workspace/artifacts/app-net-top.json -o /github/workspace/artifacts/netpols.yaml ${{ steps.add-b-flag.outputs.policies-with-b }}
-    - name: Set outputs
+        args: /github/workspace/netpol-synth-gh-action-output/app-net-top.json -o /github/workspace/netpol-synth-gh-action-output/netpols.yaml ${{ steps.add-b-flag.outputs.policies-with-b }}
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: synthesis-results
+        path: ${{ github.workspace }}/netpol-synth-gh-action-output/*
+    - name: Set outputs and clean
       id: set-outputs
       shell: bash
       run: |
-        mv ${{ github.workspace }}/artifacts $HOME/artifacts  # so we don't pollute the workspace directory
-        echo "::set-output name=netpols::$(echo $HOME/artifacts/netpols.yaml)"
-        echo "::set-output name=topology::$(echo $HOME/artifacts/app-net-top.json)"
+        echo "::set-output name=synth-artifact::synthesisy-results"
+        echo "::set-output name=synth-netpols-file-name::netpols.yaml"
+        echo "::set-output name=connection-list-file-name::app-net-top.json"
+        rm -r ${{ github.workspace }}/netpol-synth-gh-action-output
