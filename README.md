@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: np-guard/netpol-synthesis-gh-action@v2
+      - uses: np-guard/netpol-synthesis-gh-action@v3
 ```
 
 ### Automatically open a pull request for synthesized NetworkPolicies
