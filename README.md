@@ -3,11 +3,11 @@
 ## About
 This action automates the generation of Kubernetes NetworkPolicies for a given application. It will first scan your repository for YAML files which define various Kubernetes resources (e.g., Deployments, Services, ConfigMaps). It will then analyze these files and extract all network connections required for your application to work. Finally, this action will synthesise K8s NetworkPolicies that allow these connections and nothing more.
 
-This action is part of a wider attempt to provide [shift-left automation for generating and maintaining Kubernetes Network Policies](https://shift-left-netconfig.github.io/).
+This action is part of a wider attempt to provide [shift-left automation for generating and maintaining Kubernetes Network Policies](https://np-guard.github.io/).
 
 ## Inputs
 ### `corporate-policies`
-(Optional) A list of space-separated corporate policy files to consider during synthesis. Generated NetworkPolicies will never violate any of these policies. Files can be given as a relative path to files in the current repository or as URLs to files stored on GitHub. File format is described [here](https://github.com/shift-left-netconfig/baseline-rules).
+(Optional) A list of space-separated corporate policy files to consider during synthesis. Generated NetworkPolicies will never violate any of these policies. Files can be given as a relative path to files in the current repository or as URLs to files stored on GitHub. File format is described [here](https://github.com/np-guard/baseline-rules).
 
 ## Outputs
 ### `synth-artifact`
@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: shift-left-netconfig/netpol-synthesis-gh-action@v2
+      - uses: np-guard/netpol-synthesis-gh-action@v2
 ```
 
 ### Automatically open a pull request for synthesized NetworkPolicies
@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Synthesize netpols
         id: synth-netpol
-        uses: shift-left-netconfig/netpol-synthesis-gh-action@v2
+        uses: np-guard/netpol-synthesis-gh-action@v2
       - uses: actions/download-artifact@v2
         with:
           name: ${{ steps.synth-netpol.outputs.synth-artifact }}
@@ -77,9 +77,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: shift-left-netconfig/netpol-synthesis-gh-action@v2
+      - uses: np-guard/netpol-synthesis-gh-action@v2
         with:
           corporate-policies: >
-            https://github.com/shift-left-netconfig/baseline-rules/blob/master/examples/ciso_denied_ports.yaml
-            https://github.com/shift-left-netconfig/baseline-rules/blob/master/examples/restrict_access_to_payment.yaml
+            https://github.com/np-guard/baseline-rules/blob/master/examples/ciso_denied_ports.yaml
+            https://github.com/np-guard/baseline-rules/blob/master/examples/restrict_access_to_payment.yaml
 ```
