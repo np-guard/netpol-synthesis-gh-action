@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Synthesize netpols
         id: synth-netpol
-        uses: np-guard/netpol-synthesis-gh-action@v2
+        uses: np-guard/netpol-synthesis-gh-action@v3
       - uses: actions/download-artifact@v2
         with:
           name: ${{ steps.synth-netpol.outputs.synth-artifact }}
@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: np-guard/netpol-synthesis-gh-action@v2
+      - uses: np-guard/netpol-synthesis-gh-action@v3
         with:
           corporate-policies: >
             https://github.com/np-guard/baseline-rules/blob/master/examples/ciso_denied_ports.yaml
