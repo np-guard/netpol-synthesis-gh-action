@@ -47,25 +47,27 @@ jobs:
       - name: Synthesize netpols
         id: synth-netpol
         uses: np-guard/netpol-synthesis-gh-action@v3
+        with:
+          corporate-policies: >
+            https://github.com/np-guard/baseline-rules/blob/master/examples/ciso_denied_ports.yaml
       - uses: actions/download-artifact@v2
         with:
           name: ${{ steps.synth-netpol.outputs.synth-artifact }}
           path: release
-      - name: Commit changes
+      - name: Commit changes and create a PR
         shell: sh
         run: |
           git config user.name ${{ github.actor }}
           git config user.email '${{ github.actor }}@users.noreply.github.com'
+          export branch_name=set_netpols_$(date +%s)
+          git checkout -b $branch_name
           git add release/${{ steps.synth-netpol.outputs.synth-netpols-file-name }}
           git commit -m"adding network policies to enforce minimal connectivity"
-          rm release/${{ steps.synth-netpol.outputs.connection-list-file-name }}  # avoid committing connection list
-      - name: Open PR
-        uses: peter-evans/create-pull-request@v3
-        with:
-          title: Automatic updates to NetworkPolicies
-          branch: update-netpols
-          branch-suffix: timestamp
-  ```
+          git push --set-upstream origin $branch_name
+          gh pr create -B master -H $branch_name -t "Adding network policies to enforce minimal connectivity" -b "Automatically generated NetworkPolicies" 
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_SCOPED_TOKEN }}
+```
 ### Synthesize with corporate policies
 ```yaml
 name: synth-network-policies
